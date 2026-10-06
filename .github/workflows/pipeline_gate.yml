@@ -1,0 +1,51 @@
+name: Production Data Quality Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_uri:
+        description: "Baseline dataset path or S3/GCS/DuckDB URI"
+        required: true
+        default: "s3://my-lakehouse/orders/snapshot=2026-09-01/data.parquet"
+      current_uri:
+        description: "Current dataset candidate"
+        required: true
+        default: "s3://my-lakehouse/orders/snapshot=2026-10-01/data.parquet"
+
+jobs:
+  gate-snapshot:
+    name: Evaluate Snapshot Diff Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Snapdiff
+        run: pip install .
+
+      - name: Run Snapdiff Gate
+        id: snapdiff
+        run: |
+          snapdiff ${{ github.event.inputs.baseline_uri }} ${{ github.event.inputs.current_uri }} \
+            --config snapdiff.toml \
+            --out diff-report.md \
+            --fail-on breaking
+
+      - name: Publish Markdown Report Summary
+        if: always()
+        run: |
+          if [ -f diff-report.md ]; then
+            cat diff-report.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Archive Diff Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapdiff-report
+          path: diff-report.md

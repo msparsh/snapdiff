@@ -1,0 +1,22 @@
+# Snapdiff configuration file
+
+keys = ["order_id"]
+ignore_columns = ["ingested_at"]
+not_null_columns = ["order_id", "customer_id", "discount_pct"]
+
+[thresholds]
+null_delta_warn = 0.02
+null_delta_break = 0.10
+psi_warn = 0.10
+psi_break = 0.25
+ks_warn = 0.10
+ks_break = 0.20
+row_count_drop_break = 0.30
+duplicate_growth_warn = 0.01
+duplicate_growth_break = 0.05
+min_rows_drift = 100
+categorical_top_n = 20
+
+# Per-column overrides
+[columns.price]
+psi_break = 0.40

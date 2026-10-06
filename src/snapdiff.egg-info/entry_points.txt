@@ -1,0 +1,2 @@
+[console_scripts]
+snapdiff = snapdiff.cli:main
